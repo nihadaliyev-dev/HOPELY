@@ -86,11 +86,163 @@
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  flex-shrink: 0;
+  gap: 16px;
 }
 
+/* Community Switcher (TopBar) */
+.topbar-community {
+  position: relative;
+}
+
+.topbar-community-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.topbar-community-btn:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+}
+
+.topbar-community-icon {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: var(--brand-glow);
+  color: var(--brand-primary);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.topbar-community-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.topbar-community-chevron {
+  color: var(--text-muted);
+}
+
+/* Profile Dropdown */
+.topbar-profile {
+  position: relative;
+}
+
+.topbar-profile-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: filter var(--transition-fast);
+}
+
+.topbar-profile-btn:hover {
+  filter: brightness(1.2);
+}
+
+.topbar-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.topbar-avatar.lg {
+  width: 40px; height: 40px;
+  font-size: 16px;
+}
+
+/* Dropdown Menus */
+.topbar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  z-index: 100;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+}
+
+/* Specific alignments for dropdowns */
+.community-dropdown-menu { left: 0; }
+.profile-dropdown-menu { right: 0; }
+
+.topbar-dropdown-header {
+  font-size: 10px; font-weight: 800; color: var(--text-muted); 
+  padding: 4px 8px; letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+.topbar-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.topbar-dropdown-item.hoverable:hover { background: var(--bg-subtle); }
+.topbar-dropdown-item.active { background: var(--brand-glow); }
+
+.topbar-dropdown-icon {
+  width: 24px; height: 24px; font-size: 11px; border-radius: 6px;
+  background: var(--bg-subtle); display: flex; align-items: center; justify-content: center;
+  color: var(--brand-primary); font-weight: 700;
+}
+.topbar-dropdown-item.active .topbar-dropdown-icon { background: rgba(99,102,241,0.2); }
+
+.topbar-dropdown-info { flex: 1; display: flex; flex-direction: column; }
+.topbar-dropdown-info .name { font-size: 13px; font-weight: 600; }
+.topbar-dropdown-info .platform { font-size: 11px; color: var(--text-muted); }
+
+.topbar-dropdown-divider { height: 1px; background: var(--border-default); margin: 4px 0; }
+
+.topbar-dropdown-action {
+  font-size: 13px; font-weight: 600; color: var(--text-secondary); 
+  padding: 8px; cursor: pointer; text-align: left; background: transparent; border: none;
+  border-radius: var(--radius-sm); transition: color var(--transition-fast);
+}
+.topbar-dropdown-action:hover { color: var(--text-primary); }
+
+.topbar-dropdown-user-info {
+  display: flex; align-items: center; gap: 12px; padding: 8px;
+}
+.topbar-dropdown-user-info .info { display: flex; flex-direction: column; }
+.topbar-dropdown-user-info .name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.topbar-dropdown-user-info .email { font-size: 12px; color: var(--text-muted); }
+
+.dropdown-item-icon { color: var(--text-muted); }
+.topbar-dropdown-item.hoverable:hover .dropdown-item-icon { color: var(--text-primary); }
+.topbar-dropdown-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: var(--critical); }
+.topbar-dropdown-item.danger:hover .dropdown-item-icon { color: var(--critical); }
+
+/* Buttons & selects */
 .topbar-timerange {
   display: flex;
   align-items: center;
