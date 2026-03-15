@@ -135,6 +135,13 @@
   align-items: center;
   justify-content: center;
   font-size: 10px;
+  overflow: hidden;
+}
+
+.topbar-community-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .topbar-community-name {
@@ -227,7 +234,10 @@
 .topbar-dropdown-icon {
   width: 24px; height: 24px; font-size: 11px; border-radius: 6px;
   background: var(--bg-subtle); display: flex; align-items: center; justify-content: center;
-  color: var(--brand-primary); font-weight: 700;
+  color: var(--brand-primary); font-weight: 700; overflow: hidden;
+}
+.topbar-dropdown-icon img {
+  width: 100%; height: 100%; object-fit: cover;
 }
 .topbar-dropdown-item.active .topbar-dropdown-icon { background: rgba(99,102,241,0.2); }
 
@@ -303,6 +313,12 @@
   background: var(--bg-subtle);
   color: var(--text-primary);
   border-color: var(--border-strong);
+}
+
+.topbar-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--critical);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .topbar-bell-wrapper { position: relative; }
