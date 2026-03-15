@@ -48,12 +48,12 @@ The design philosophy is inspired by premium SaaS products like **Linear**, **Ve
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/pulsecheck-ai.git
-cd pulsecheck-ai
+cd pulsecheck-ai/client
 
-# Install dependencies
+# Install frontend dependencies
 npm install
 
-# Start the development server
+# Start the frontend development server
 npm run dev
 ```
 
@@ -70,44 +70,25 @@ npm run preview
 
 ## 📁 Project Structure
 
-```
+```text
 pulsecheck-ai/
-├── public/
-│   └── icon.svg                    # App favicon
-├── src/
-│   ├── main.jsx                    # React entry point
-│   ├── App.jsx                     # Router + layout shell
-│   ├── index.css                   # Global design system & CSS variables
-│   │
-│   ├── data/
-│   │   └── mockData.js             # Sample data for all dashboard sections
-│   │
-│   ├── components/
-│   │   ├── layout/
-│   │   │   ├── Sidebar.jsx         # Collapsible sidebar navigation
-│   │   │   ├── Sidebar.css
-│   │   │   ├── TopBar.jsx          # Search, time range picker, live indicator
-│   │   │   └── TopBar.css
-│   │   │
-│   │   └── ui/
-│   │       ├── MetricCard.jsx      # Reusable stat card with trend indicator
-│   │       ├── MetricCard.css
-│   │       ├── ChannelDetailPanel.jsx  # Slide-in channel detail modal
-│   │       └── ChannelDetailPanel.css
-│   │
-│   └── pages/
-│       ├── Overview.jsx / .css     # Main dashboard
-│       ├── DeadZoneMap.jsx / .css  # Channel heatmap grid
-│       ├── Channels.jsx / .css     # Channel table view
-│       ├── AISparks.jsx / .css     # AI spark generator
-│       ├── Members.jsx / .css      # Community intelligence
-│       ├── Alerts.jsx / .css       # Risk alerts panel
-│       ├── Integrations.jsx / .css # Platform connections
-│       └── Settings.jsx / .css     # Admin configuration
+├── client/                     # React + Vite Frontend
+│   ├── public/
+│   │   └── icon.svg            # App favicon
+│   ├── src/
+│   │   ├── main.jsx            # React entry point
+│   │   ├── App.jsx             # Router + layout shell
+│   │   ├── index.css           # Global design system & CSS variables
+│   │   ├── data/
+│   │   │   └── mockData.js     # Sample data for all dashboard sections
+│   │   ├── components/         # Layout & UI components
+│   │   └── pages/              # Dashboard pages
+│   ├── index.html
+│   ├── vite.config.js
+│   └── package.json
 │
-├── index.html
-├── vite.config.js
-└── package.json
+└── server/                     # Spring Boot Backend (To be implemented)
+    └── README.md
 ```
 
 ---

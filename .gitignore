@@ -1,46 +1,37 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
+# Node / React
+client/node_modules/
+client/dist/
+client/.vite/
 
-# Build output
-dist/
-dist-ssr/
-build/
+# Spring Boot / Java
+server/target/
+server/.mvn/wrapper/maven-wrapper.jar
+server/build/
+server/!gradle/wrapper/gradle-wrapper.jar
+server/out/
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
+client/.env
+client/.env.local
+server/.env
 
 # Logs
 logs/
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
 # Editor & OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 .vscode/extensions.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
-# Vite cache
-.vite/
 
 # Testing
 coverage/
