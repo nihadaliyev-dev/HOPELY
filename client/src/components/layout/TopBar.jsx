@@ -64,8 +64,8 @@ export default function TopBar({ onMenuClick }) {
             className="topbar-community-btn"
             onClick={() => setCommunityDropdownOpen(!communityDropdownOpen)}
           >
-            <div className="topbar-community-icon">{activeCommunity.icon}</div>
-            <span className="topbar-community-name">{activeCommunity.name}</span>
+            <div className="topbar-community-icon">{activeCommunity?.icon}</div>
+            <span className="topbar-community-name">{activeCommunity?.name || 'Select a Server'}</span>
             <ChevronDown size={14} className="topbar-community-chevron" />
           </button>
 
@@ -75,7 +75,7 @@ export default function TopBar({ onMenuClick }) {
               {communities.map(c => (
                 <button 
                   key={c.id}
-                  className={`topbar-dropdown-item ${activeCommunity.id === c.id ? 'active' : ''}`}
+                  className={`topbar-dropdown-item ${activeCommunity?.id === c.id ? 'active' : ''}`}
                   onClick={() => {
                     setActiveCommunity(c)
                     setCommunityDropdownOpen(false)
