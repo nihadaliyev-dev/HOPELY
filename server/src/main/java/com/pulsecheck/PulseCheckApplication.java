@@ -1,0 +1,14 @@
+package com.pulsecheck;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
+
+@SpringBootApplication
+@EnableCaching
+public class PulseCheckApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(PulseCheckApplication.class, args);
+    }
+}
