@@ -23,7 +23,12 @@ export function CommunityProvider({ children }) {
 
     setIsLoading(true)
     communityService.getCommunities()
-      .then(data => setCommunities(data))
+      .then(data => {
+        setCommunities(data)
+        if (data.length > 0 && !activeCommunity) {
+          setActiveCommunity(data[0])
+        }
+      })
       .catch(err => console.error('[CommunityContext] Failed to load communities:', err))
       .finally(() => setIsLoading(false))
   }, [user])

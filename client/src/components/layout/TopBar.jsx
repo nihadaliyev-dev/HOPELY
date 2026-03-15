@@ -64,8 +64,10 @@ export default function TopBar({ onMenuClick }) {
             className="topbar-community-btn"
             onClick={() => setCommunityDropdownOpen(!communityDropdownOpen)}
           >
-            <div className="topbar-community-icon">{activeCommunity.icon}</div>
-            <span className="topbar-community-name">{activeCommunity.name}</span>
+            <div className="topbar-community-icon">
+              {activeCommunity?.icon ? <img src={activeCommunity.icon} alt="" /> : null}
+            </div>
+            <span className="topbar-community-name">{activeCommunity?.name || 'Select a Server'}</span>
             <ChevronDown size={14} className="topbar-community-chevron" />
           </button>
 
@@ -75,13 +77,15 @@ export default function TopBar({ onMenuClick }) {
               {communities.map(c => (
                 <button 
                   key={c.id}
-                  className={`topbar-dropdown-item ${activeCommunity.id === c.id ? 'active' : ''}`}
+                  className={`topbar-dropdown-item ${activeCommunity?.id === c.id ? 'active' : ''}`}
                   onClick={() => {
                     setActiveCommunity(c)
                     setCommunityDropdownOpen(false)
                   }}
                 >
-                  <div className="topbar-dropdown-icon">{c.icon}</div>
+                  <div className="topbar-dropdown-icon">
+                    {c.icon ? <img src={c.icon} alt="" /> : null}
+                  </div>
                   <div className="topbar-dropdown-info">
                     <span className="name">{c.name}</span>
                     <span className="platform">{c.platform}</span>
@@ -153,6 +157,15 @@ export default function TopBar({ onMenuClick }) {
           <span className="live-dot" />
           <span>Live</span>
         </div>
+
+        {/* Explicit Sign Out Button inside TopBar */}
+        <button 
+          className="topbar-icon-btn topbar-logout-btn" 
+          title="Sign Out"
+          onClick={logout}
+        >
+          <LogOut size={15} />
+        </button>
 
         <div className="topbar-sep" style={{ margin: '0 8px' }}></div>
 
