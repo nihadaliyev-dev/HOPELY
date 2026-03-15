@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Map, MessagesSquare, Sparkles,
-  Users, BellRing, Plug, Settings, ChevronLeft, ChevronRight,
-  Zap
+  Users, BellRing, Workflow, FileBarChart, Plug, Settings, ChevronLeft, ChevronRight,
+  Zap, ChevronsUpDown, Check
 } from 'lucide-react'
+import { useCommunity } from '../../context/CommunityContext'
 import './Sidebar.css'
 
 const navItems = [
@@ -15,12 +17,21 @@ const navItems = [
   { label: 'Alerts',        icon: BellRing,         path: '/alerts' },
 ]
 
+const actionItems = [
+  { label: 'Automations',   icon: Workflow,         path: '/automations' },
+  { label: 'Reports',       icon: FileBarChart,     path: '/reports' },
+]
+
 const bottomItems = [
   { label: 'Integrations', icon: Plug,     path: '/integrations' },
   { label: 'Settings',     icon: Settings, path: '/settings' },
 ]
 
+
 export default function Sidebar({ collapsed, onToggle }) {
+  const { communities, activeCommunity, setActiveCommunity } = useCommunity()
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
   return (
     <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`}>
       {/* Logo */}
@@ -38,6 +49,50 @@ export default function Sidebar({ collapsed, onToggle }) {
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
+
+      {/* Community Switcher */}
+      {!collapsed && (
+        <div className="community-switcher-wrapper">
+          <button 
+            className="community-switcher-btn"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
+            <div className="community-switcher-icon">{activeCommunity.icon}</div>
+            <div className="community-switcher-info">
+              <span className="cs-name">{activeCommunity.name}</span>
+              <span className="cs-platform">{activeCommunity.platform}</span>
+            </div>
+            <ChevronsUpDown size={14} className="cs-chevron" />
+          </button>
+
+          {dropdownOpen && (
+            <div className="community-dropdown">
+              <div className="dropdown-label">Your Communities</div>
+              {communities.map(c => (
+                <button 
+                  key={c.id}
+                  className="dropdown-item"
+                  onClick={() => {
+                    setActiveCommunity(c)
+                    setDropdownOpen(false)
+                  }}
+                >
+                  <div className="community-switcher-icon">{c.icon}</div>
+                  <div className="dropdown-item-info">
+                    <span className="cs-name">{c.name}</span>
+                  </div>
+                  {c.id === activeCommunity.id && <Check size={14} className="dropdown-check" />}
+                </button>
+              ))}
+              <div className="dropdown-divider"></div>
+              <button className="dropdown-item dropdown-item-action">
+                <div className="community-switcher-icon action-icon">+</div>
+                Connect new community
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Status Banner */}
       {!collapsed && (
@@ -65,6 +120,21 @@ export default function Sidebar({ collapsed, onToggle }) {
             {path === '/sparks' && !collapsed && (
               <span className="sidebar-badge sidebar-badge--brand">3</span>
             )}
+          </NavLink>
+        ))}
+
+        <div className="sidebar-divider" />
+
+        <div className="sidebar-section-label">{!collapsed && 'ACTION CENTER'}</div>
+        {actionItems.map(({ label, icon: Icon, path }) => (
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+            title={collapsed ? label : undefined}
+          >
+            <Icon size={17} className="sidebar-item-icon" />
+            {!collapsed && <span>{label}</span>}
           </NavLink>
         ))}
 
