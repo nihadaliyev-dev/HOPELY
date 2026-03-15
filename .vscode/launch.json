@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "PulseCheckApplication",
+            "request": "launch",
+            "mainClass": "com.pulsecheck.PulseCheckApplication",
+            "projectName": "pulsecheck-server"
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"
