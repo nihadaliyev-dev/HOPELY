@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Map, MessagesSquare, Sparkles,
   Users, BellRing, Workflow, FileBarChart, Plug, Settings, ChevronLeft, ChevronRight,
-  Zap, Check
+  Zap, Check, X
 } from 'lucide-react'
 import './Sidebar.css'
 
@@ -27,24 +27,33 @@ const bottomItems = [
 ]
 
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, onToggle, isMobileOpen, onCloseMobile }) {
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`}>
-      {/* Logo */}
-      <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <Zap size={18} className="logo-zap" />
-        </div>
-        {!collapsed && (
-          <div className="sidebar-logo-text">
-            <span className="logo-name">PulseCheck</span>
-            <span className="logo-tag">AI</span>
+    <>
+      <div 
+        className={`sidebar-overlay ${isMobileOpen ? 'sidebar-overlay--open' : ''}`} 
+        onClick={onCloseMobile} 
+      />
+      <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''} ${isMobileOpen ? 'sidebar--mobile-open' : ''}`}>
+        {/* Logo */}
+        <div className="sidebar-logo">
+          <div className="sidebar-logo-icon">
+            <Zap size={18} className="logo-zap" />
           </div>
-        )}
-        <button className="sidebar-collapse-btn" onClick={onToggle} title="Toggle sidebar">
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
-      </div>
+          {!collapsed && (
+            <div className="sidebar-logo-text">
+              <span className="logo-name">PulseCheck</span>
+              <span className="logo-tag">AI</span>
+            </div>
+          )}
+          <button className="sidebar-collapse-btn" onClick={onToggle} title="Toggle sidebar">
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+          
+          <button className="sidebar-mobile-close" onClick={onCloseMobile}>
+            <X size={18} />
+          </button>
+        </div>
 
       {/* Status Banner */}
       {!collapsed && (
@@ -118,6 +127,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           </div>
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   )
 }

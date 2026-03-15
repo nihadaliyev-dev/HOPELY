@@ -14,16 +14,27 @@ export function AuthProvider({ children }) {
       .finally(() => setIsInitializing(false))
   }, [])
 
+  /** Standard email/password login (admin fallback) */
   const login = async (email, password) => {
     const { token, user: userData } = await authService.login(email, password)
     localStorage.setItem('pulsecheck_token', token)
     setUser(userData)
   }
 
-  const loginWithDiscord = async (code) => {
-    const { token, user: userData } = await authService.loginWithDiscord(code)
+  /**
+   * Called by AuthCallback after Discord redirects back with ?code=
+   * Exchanges the code for a JWT and stores it.
+   */
+  const exchangeDiscordCode = async (code) => {
+    const { token, user: userData } = await authService.exchangeDiscordCode(code)
     localStorage.setItem('pulsecheck_token', token)
     setUser(userData)
+    return userData
+  }
+
+  /** Initiates Discord OAuth2 redirect — browser leaves the app */
+  const loginWithDiscord = () => {
+    authService.redirectToDiscord()
   }
 
   const logout = () => {
@@ -32,7 +43,14 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isInitializing, login, loginWithDiscord, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      isInitializing,
+      login,
+      loginWithDiscord,
+      exchangeDiscordCode,
+      logout,
+    }}>
       {!isInitializing && children}
     </AuthContext.Provider>
   )

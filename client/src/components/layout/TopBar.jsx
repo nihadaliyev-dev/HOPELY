@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Search, Bell, ChevronDown, Clock, RefreshCw, LogOut, Settings as SettingsIcon, User } from 'lucide-react'
+import { Search, Bell, ChevronDown, Clock, RefreshCw, LogOut, Settings as SettingsIcon, User, Menu } from 'lucide-react'
 import { useCommunity } from '../../context/CommunityContext'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -17,7 +17,7 @@ const routeLabels = {
   '/settings': 'Settings',
 }
 
-export default function TopBar() {
+export default function TopBar({ onMenuClick }) {
   const location = useLocation()
   const { communities, activeCommunity, setActiveCommunity } = useCommunity()
   const { user, logout } = useAuth()
@@ -51,6 +51,9 @@ export default function TopBar() {
     <header className="topbar">
       {/* Left: Community Switcher (moved from Sidebar) */}
       <div className="topbar-left">
+        <button className="topbar-mobile-menu" onClick={onMenuClick}>
+          <Menu size={18} />
+        </button>
         <div className="topbar-breadcrumb">
           <span className="topbar-page">{pageLabel}</span>
         </div>

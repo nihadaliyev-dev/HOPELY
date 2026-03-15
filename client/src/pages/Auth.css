@@ -281,3 +281,4 @@
   .auth-brand { display: none; }
   .auth-form-side { width: 100%; padding: 24px; }
 }
+.auth-error-message { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--critical); font-size: 13px; padding: 10px; border-radius: var(--radius-sm); margin-bottom: 12px; }
