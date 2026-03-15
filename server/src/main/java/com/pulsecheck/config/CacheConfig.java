@@ -13,8 +13,8 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager manager = new CaffeineCacheManager("guildAnalysis");
-        manager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS));
+        CaffeineCacheManager manager = new CaffeineCacheManager("guildAnalysis", "userGuilds");
+        manager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES));
         return manager;
     }
 }

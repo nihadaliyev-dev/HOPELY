@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Zap, Loader2 } from 'lucide-react'
@@ -13,8 +13,12 @@ export default function AuthCallback() {
   const [error, setError] = useState(null)
   const { exchangeDiscordCode } = useAuth()
   const navigate = useNavigate()
+  const hasExchanged = useRef(false)   // ← guard against React StrictMode double-invoke
 
   useEffect(() => {
+    if (hasExchanged.current) return   // already running or done — skip second mount
+    hasExchanged.current = true
+
     const params = new URLSearchParams(window.location.search)
     const code = params.get('code')
     const errorParam = params.get('error')

@@ -4,6 +4,7 @@ import com.pulsecheck.community.dto.GuildDto;
 import com.pulsecheck.discord.DiscordClient;
 import com.pulsecheck.discord.dto.DiscordGuild;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ public class CommunityService {
      * Returns guilds where the user has the ADMINISTRATOR permission bit set.
      * The permissions field from Discord is a string — parse as Long before bitwise check.
      */
+    @Cacheable(value = "userGuilds", key = "#discordAccessToken")
     public List<GuildDto> getAdminGuilds(String discordAccessToken) {
         List<DiscordGuild> guilds = discordClient.getUserGuilds(discordAccessToken);
         return guilds.stream()
