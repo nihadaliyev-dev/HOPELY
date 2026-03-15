@@ -1,6 +1,8 @@
-import { useState } from 'react'
-import { TrendingUp, TrendingDown, Minus, MessageSquare } from 'lucide-react'
-import { members } from '../data/mockData'
+import { useState, useEffect } from 'react'
+import { TrendingUp, TrendingDown, Minus, MessageSquare, Loader2 } from 'lucide-react'
+import { useCommunity } from '../context/CommunityContext'
+import { useToast } from '../context/ToastContext'
+import { dashboardService } from '../services/dashboardService'
 import './Members.css'
 
 const labelColors = {
@@ -12,13 +14,38 @@ const labelColors = {
 }
 
 export default function Members() {
+  const { activeCommunity } = useCommunity()
+  const [membersList, setMembersList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { addToast } = useToast()
+
   const [filter, setFilter] = useState('All')
 
-  const labelFilters = ['All', 'Catalyst', 'Expert', 'At Risk', 'Re-engage Candidate', 'Silent Reader']
-  const filtered = filter === 'All' ? members : members.filter(m => m.label === filter)
+  useEffect(() => {
+    if (!activeCommunity) return
+    let isMounted = true
+    setLoading(true)
 
-  const catalysts = members.filter(m => m.label === 'Catalyst')
-  const atRisk = members.filter(m => m.label === 'At Risk' || m.label === 'Re-engage Candidate')
+    dashboardService.getMembers(activeCommunity.id)
+      .then(data => {
+        if (isMounted) setMembersList(data)
+      })
+      .catch(err => {
+        console.error(err)
+        if (isMounted) addToast({ type: 'error', message: 'Failed to load members' })
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [activeCommunity, addToast])
+
+  const labelFilters = ['All', 'Catalyst', 'Expert', 'At Risk', 'Re-engage Candidate', 'Silent Reader']
+  const filtered = filter === 'All' ? membersList : membersList.filter(m => m.label === filter)
+
+  const catalysts = membersList.filter(m => m.label === 'Catalyst')
+  const atRisk = membersList.filter(m => m.label === 'At Risk' || m.label === 'Re-engage Candidate')
 
   return (
     <div className="members-page animate-fade-in">
@@ -32,7 +59,7 @@ export default function Members() {
       {/* Summary row */}
       <div className="members-summary">
         <div className="member-summary-card card">
-          <span className="ms-val">{members.length}</span>
+          <span className="ms-val">{membersList.length}</span>
           <span className="ms-label">Total Tracked</span>
         </div>
         <div className="member-summary-card card">
@@ -45,7 +72,7 @@ export default function Members() {
         </div>
         <div className="member-summary-card card">
           <span className="ms-val" style={{ color: 'var(--info)' }}>
-            {members.filter(m => m.label === 'Silent Reader').length}
+            {membersList.filter(m => m.label === 'Silent Reader').length}
           </span>
           <span className="ms-label">Silent Readers</span>
         </div>
@@ -62,11 +89,16 @@ export default function Members() {
         ))}
       </div>
 
-      {/* Member grid */}
       <div className="members-grid">
-        {filtered.map(member => (
-          <MemberCard key={member.id} member={member} />
-        ))}
+        {loading ? (
+          <div className="flex items-center justify-center p-12 w-full" style={{ gridColumn: '1 / -1' }}>
+            <Loader2 className="animate-spin text-brand" size={24} />
+          </div>
+        ) : (
+          filtered.map(member => (
+            <MemberCard key={member.id} member={member} />
+          ))
+        )}
       </div>
     </div>
   )

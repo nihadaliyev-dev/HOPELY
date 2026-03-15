@@ -1,14 +1,41 @@
-import { useState } from 'react'
-import { channels } from '../data/mockData'
+import { useState, useEffect } from 'react'
 import ChannelDetailPanel from '../components/ui/ChannelDetailPanel'
-import { Search } from 'lucide-react'
+import { Search, Loader2 } from 'lucide-react'
+import { useCommunity } from '../context/CommunityContext'
+import { useToast } from '../context/ToastContext'
+import { dashboardService } from '../services/dashboardService'
 import './Channels.css'
 
 export default function Channels() {
+  const { activeCommunity } = useCommunity()
+  const [channelsList, setChannelsList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { addToast } = useToast()
+
   const [selected, setSelected] = useState(null)
   const [search, setSearch] = useState('')
 
-  const filtered = channels.filter(c =>
+  useEffect(() => {
+    if (!activeCommunity) return
+    let isMounted = true
+    setLoading(true)
+
+    dashboardService.getChannels(activeCommunity.id)
+      .then(data => {
+        if (isMounted) setChannelsList(data)
+      })
+      .catch(err => {
+        console.error(err)
+        if (isMounted) addToast({ type: 'error', message: 'Failed to load channels' })
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [activeCommunity, addToast])
+
+  const filtered = channelsList.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.description.toLowerCase().includes(search.toLowerCase())
   )
@@ -46,8 +73,13 @@ export default function Channels() {
           <span>Status</span>
         </div>
         {/* Rows */}
-        {filtered.map(ch => {
-          const bc = { healthy: 'var(--healthy)', warning: 'var(--warning)', critical: 'var(--critical)' }[ch.risk]
+        {loading ? (
+          <div className="flex items-center justify-center p-8 w-full" style={{ gridColumn: '1 / -1' }}>
+            <Loader2 className="animate-spin text-brand" size={24} />
+          </div>
+        ) : (
+          filtered.map(ch => {
+            const bc = { healthy: 'var(--healthy)', warning: 'var(--warning)', critical: 'var(--critical)' }[ch.risk]
           return (
             <div
               key={ch.id}
@@ -72,7 +104,7 @@ export default function Channels() {
               </span>
             </div>
           )
-        })}
+        }))}
       </div>
 
       {selected && <ChannelDetailPanel channel={selected} onClose={() => setSelected(null)} />}

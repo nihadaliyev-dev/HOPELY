@@ -1,46 +1,38 @@
-import { useState } from 'react'
-import { Plus, Zap, AlertTriangle, MessageSquare, Play, Pause, MoreVertical, Search, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Zap, AlertTriangle, MessageSquare, Play, Pause, MoreVertical, Search, Check, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useToast } from '../context/ToastContext'
+import { useCommunity } from '../context/CommunityContext'
+import { dashboardService } from '../services/dashboardService'
 import './Automations.css'
 
-const initialRules = [
-  {
-    id: 1,
-    name: 'Critical Dead Zone Alert',
-    ifMetric: 'Channel Inactivity',
-    condition: '> 48 hours',
-    action: 'Send Slack DM to @admin',
-    status: 'active',
-    lastRun: '2 hours ago',
-    runs: 142
-  },
-  {
-    id: 2,
-    name: 'Sentiment Drop Warning',
-    ifMetric: 'Channel Sentiment',
-    condition: '< 40%',
-    action: 'Post "What\'s on your mind?" Spark',
-    status: 'active',
-    lastRun: '1 day ago',
-    runs: 28
-  },
-  {
-    id: 3,
-    name: 'Expert Disengagement',
-    ifMetric: 'Member (Expert) Activity',
-    condition: '0 msgs in 7 days',
-    action: 'Tag in #core-contributors',
-    status: 'paused',
-    lastRun: 'Never',
-    runs: 0
-  }
-]
-
 export default function Automations() {
-  const [rules, setRules] = useState(initialRules)
+  const { activeCommunity } = useCommunity()
+  const [rules, setRules] = useState([])
+  const [loading, setLoading] = useState(true)
+
   const [isCreating, setIsCreating] = useState(false)
   const { addToast } = useToast()
+
+  useEffect(() => {
+    if (!activeCommunity) return
+    let isMounted = true
+    setLoading(true)
+
+    dashboardService.getAutomations(activeCommunity.id)
+      .then(data => {
+        if (isMounted) setRules(data)
+      })
+      .catch(err => {
+        console.error(err)
+        if (isMounted) addToast({ type: 'error', message: 'Failed to load automations' })
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [activeCommunity, addToast])
 
   const toggleStatus = (id) => {
     setRules(r => r.map(rule => {
@@ -135,45 +127,51 @@ export default function Automations() {
         </motion.div>
       )}
 
-      <div className="rules-list">
-        {rules.map(rule => (
-          <div key={rule.id} className={`rule-card card ${rule.status === 'active' ? 'rule-active' : 'rule-paused'}`}>
-            <div className="rule-header">
-              <h3 className="rule-name">{rule.name}</h3>
-              <div className="rule-toggles">
-                <button 
-                  className={`btn btn-sm ${rule.status === 'active' ? 'btn-secondary' : 'btn-primary'}`}
-                  onClick={() => toggleStatus(rule.id)}
-                >
-                  {rule.status === 'active' ? <><Pause size={12} /> Pause</> : <><Play size={12} /> Resume</>}
-                </button>
-                <button className="btn-icon"><MoreVertical size={16} /></button>
+      {loading ? (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="animate-spin text-brand" size={24} />
+        </div>
+      ) : (
+        <div className="rules-list">
+          {rules.map(rule => (
+            <div key={rule.id} className={`rule-card card ${rule.status === 'active' ? 'rule-active' : 'rule-paused'}`}>
+              <div className="rule-header">
+                <h3 className="rule-name">{rule.name}</h3>
+                <div className="rule-toggles">
+                  <button 
+                    className={`btn btn-sm ${rule.status === 'active' ? 'btn-secondary' : 'btn-primary'}`}
+                    onClick={() => toggleStatus(rule.id)}
+                  >
+                    {rule.status === 'active' ? <><Pause size={12} /> Pause</> : <><Play size={12} /> Resume</>}
+                  </button>
+                  <button className="btn-icon"><MoreVertical size={16} /></button>
+                </div>
               </div>
-            </div>
 
-            <div className="rule-logic">
-              <div className="logic-part logic-if">
-                <span className="logic-badge">IF</span>
-                <span className="logic-text">{rule.ifMetric} <strong>{rule.condition}</strong></span>
+              <div className="rule-logic">
+                <div className="logic-part logic-if">
+                  <span className="logic-badge">IF</span>
+                  <span className="logic-text">{rule.ifMetric} <strong>{rule.condition}</strong></span>
+                </div>
+                <div className="logic-arrow">→</div>
+                <div className="logic-part logic-then">
+                  <span className="logic-badge badge-brand">THEN</span>
+                  <span className="logic-text">{rule.action}</span>
+                </div>
               </div>
-              <div className="logic-arrow">→</div>
-              <div className="logic-part logic-then">
-                <span className="logic-badge badge-brand">THEN</span>
-                <span className="logic-text">{rule.action}</span>
-              </div>
-            </div>
 
-            <div className="rule-footer">
-              <div className="rule-stat">
-                <span className="stat-dot" style={{ background: rule.status === 'active' ? 'var(--healthy)' : 'var(--text-muted)' }}></span>
-                {rule.status === 'active' ? 'Active' : 'Paused'}
+              <div className="rule-footer">
+                <div className="rule-stat">
+                  <span className="stat-dot" style={{ background: rule.status === 'active' ? 'var(--healthy)' : 'var(--text-muted)' }}></span>
+                  {rule.status === 'active' ? 'Active' : 'Paused'}
+                </div>
+                <div className="rule-stat">Runs: {rule.runs}</div>
+                <div className="rule-stat">Last run: {rule.lastRun}</div>
               </div>
-              <div className="rule-stat">Runs: {rule.runs}</div>
-              <div className="rule-stat">Last run: {rule.lastRun}</div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

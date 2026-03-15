@@ -1,29 +1,56 @@
-import { useState } from 'react'
-import { Filter, Search, Grid, List } from 'lucide-react'
-import { channels } from '../data/mockData'
+import { useState, useEffect } from 'react'
+import { Filter, Search, Grid, List, Loader2 } from 'lucide-react'
 import ChannelDetailPanel from '../components/ui/ChannelDetailPanel'
+import { useCommunity } from '../context/CommunityContext'
+import { useToast } from '../context/ToastContext'
+import { dashboardService } from '../services/dashboardService'
 import './DeadZoneMap.css'
 
 const riskOrder = { critical: 0, warning: 1, healthy: 2 }
 const categories = ['All', 'Tech', 'General', 'Business', 'Creative', 'Career']
 
 export default function DeadZoneMap() {
+  const { activeCommunity } = useCommunity()
+  const [channelsList, setChannelsList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { addToast } = useToast()
+
   const [selected, setSelected] = useState(null)
   const [filterRisk, setFilterRisk] = useState('All')
   const [filterCat, setFilterCat] = useState('All')
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState('grid')
 
-  const filtered = channels
+  useEffect(() => {
+    if (!activeCommunity) return
+    let isMounted = true
+    setLoading(true)
+
+    dashboardService.getChannels(activeCommunity.id)
+      .then(data => {
+        if (isMounted) setChannelsList(data)
+      })
+      .catch(err => {
+        console.error(err)
+        if (isMounted) addToast({ type: 'error', message: 'Failed to load channels' })
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [activeCommunity, addToast])
+
+  const filtered = channelsList
     .filter(c => filterRisk === 'All' || c.risk === filterRisk.toLowerCase())
     .filter(c => filterCat === 'All' || c.category === filterCat)
     .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => riskOrder[a.risk] - riskOrder[b.risk])
 
   const counts = {
-    critical: channels.filter(c => c.risk === 'critical').length,
-    warning: channels.filter(c => c.risk === 'warning').length,
-    healthy: channels.filter(c => c.risk === 'healthy').length,
+    critical: channelsList.filter(c => c.risk === 'critical').length,
+    warning: channelsList.filter(c => c.risk === 'warning').length,
+    healthy: channelsList.filter(c => c.risk === 'healthy').length,
   }
 
   return (
@@ -48,7 +75,7 @@ export default function DeadZoneMap() {
           <span className="dz-chip-label">Healthy</span>
         </div>
         <div className="dz-chip">
-          <span className="dz-chip-count">{channels.length}</span>
+          <span className="dz-chip-count">{channelsList.length}</span>
           <span className="dz-chip-label">Total</span>
         </div>
       </div>
@@ -94,7 +121,11 @@ export default function DeadZoneMap() {
       </div>
 
       {/* Channel Grid / List */}
-      {viewMode === 'grid' ? (
+      {loading ? (
+        <div className="flex items-center justify-center p-12 w-full">
+          <Loader2 className="animate-spin text-brand" size={24} />
+        </div>
+      ) : viewMode === 'grid' ? (
         <div className="dz-grid">
           {filtered.map(ch => (
             <ChannelHeatCell key={ch.id} channel={ch} onClick={() => setSelected(ch)} />
@@ -108,7 +139,7 @@ export default function DeadZoneMap() {
         </div>
       )}
 
-      {filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className="dz-empty">
           <p>No channels match your filters.</p>
         </div>

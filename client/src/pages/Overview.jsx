@@ -1,15 +1,13 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { TrendingUp, TrendingDown, Minus, ArrowRight, Brain, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import {
-  communityStats, pulseTimelineData, alerts as allAlerts, aiDiagnosis
-} from '../data/mockData'
 import MetricCard from '../components/ui/MetricCard'
 import ChannelDetailPanel from '../components/ui/ChannelDetailPanel'
-import { channels } from '../data/mockData'
 import { useToast } from '../context/ToastContext'
+import { useCommunity } from '../context/CommunityContext'
+import { dashboardService } from '../services/dashboardService'
 import './Overview.css'
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -26,18 +24,51 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
-const topAlerts = allAlerts.filter(a => a.priority === 'critical').slice(0, 3)
-
 export default function Overview() {
+  const { activeCommunity } = useCommunity()
   const [selectedChannel, setSelectedChannel] = useState(null)
   
+  // Data states
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState(null)
+  const [timeline, setTimeline] = useState([])
+  const [diagnosis, setDiagnosis] = useState(null)
+  const [alertsList, setAlertsList] = useState([])
+  const [criticalChannels, setCriticalChannels] = useState([])
+
   // Interactive mock states
   const { addToast } = useToast()
   const [isExporting, setIsExporting] = useState(false)
   const [isDiagnosing, setIsDiagnosing] = useState(false)
   const [loadingAlertId, setLoadingAlertId] = useState(null)
 
-  const criticalChannels = channels.filter(c => c.risk === 'critical')
+  useEffect(() => {
+    if (!activeCommunity) return
+    let isMounted = true
+    setLoading(true)
+
+    Promise.all([
+      dashboardService.getOverviewStats(activeCommunity.id),
+      dashboardService.getTimeline(activeCommunity.id, '7d'),
+      dashboardService.getAiDiagnosis(activeCommunity.id),
+      dashboardService.getAlerts(activeCommunity.id),
+      dashboardService.getChannels(activeCommunity.id)
+    ]).then(([statsData, timelineData, diagnosisData, alertsData, channelsData]) => {
+      if (!isMounted) return
+      setStats(statsData)
+      setTimeline(timelineData)
+      setDiagnosis(diagnosisData)
+      setAlertsList(alertsData.filter(a => a.priority === 'critical').slice(0, 3))
+      setCriticalChannels(channelsData.filter(c => c.risk === 'critical'))
+    }).catch(err => {
+      console.error(err)
+      if (isMounted) addToast({ type: 'error', message: 'Failed to load dashboard data' })
+    }).finally(() => {
+      if (isMounted) setLoading(false)
+    })
+
+    return () => { isMounted = false }
+  }, [activeCommunity, addToast])
 
   const handleExport = () => {
     setIsExporting(true)
@@ -61,6 +92,14 @@ export default function Overview() {
       setLoadingAlertId(null)
       addToast({ type: 'success', message: `Action "${alert.action}" executed successfully.` })
     }, 1000)
+  }
+
+  if (loading || !stats || !diagnosis) {
+    return (
+      <div className="flex items-center justify-center h-full w-full" style={{ minHeight: '60vh' }}>
+        <Loader2 className="animate-spin" size={32} style={{ color: 'var(--brand-primary)' }} />
+      </div>
+    )
   }
 
   return (
@@ -97,42 +136,42 @@ export default function Overview() {
       <div className="overview-metrics">
         <MetricCard
           label="Health Score"
-          value={communityStats.healthScore}
+          value={stats.healthScore}
           unit="/100"
-          change={communityStats.weeklyChange.healthScore}
+          change={stats.weeklyChange.healthScore}
           highlight
           color="brand"
         />
         <MetricCard
           label="Active Channels"
-          value={communityStats.activeChannels}
-          change={communityStats.weeklyChange.activeChannels}
+          value={stats.activeChannels}
+          change={stats.weeklyChange.activeChannels}
           color="healthy"
         />
         <MetricCard
           label="Dying Channels"
-          value={communityStats.dyingChannels}
-          change={communityStats.weeklyChange.dyingChannels}
+          value={stats.dyingChannels}
+          change={stats.weeklyChange.dyingChannels}
           invertTrend
           color="critical"
         />
         <MetricCard
           label="Avg Discussion Depth"
-          value={communityStats.avgDiscussionDepth}
+          value={stats.avgDiscussionDepth}
           unit=" msgs"
           color="info"
         />
         <MetricCard
           label="Sentiment Score"
-          value={communityStats.sentimentScore}
+          value={stats.sentimentScore}
           unit="%"
-          change={communityStats.weeklyChange.sentimentScore}
+          change={stats.weeklyChange.sentimentScore}
           invertTrend
           color="warning"
         />
         <MetricCard
           label="AI Interventions"
-          value={communityStats.aiInterventionCount}
+          value={stats.aiInterventionCount}
           unit=" this week"
           color="brand"
         />
@@ -155,7 +194,7 @@ export default function Overview() {
           </div>
           <div style={{ padding: '16px 8px 8px' }}>
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={pulseTimelineData}>
+              <AreaChart data={timeline}>
                 <defs>
                   <linearGradient id="gradMessages" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
@@ -193,37 +232,37 @@ export default function Overview() {
               <p className="text-sm text-secondary">Updated 2 min ago</p>
             </div>
             <div className="diagnosis-score-chip">
-              <span className="diagnosis-score-val">{aiDiagnosis.score}</span>
+              <span className="diagnosis-score-val">{diagnosis.score}</span>
               <span className="diagnosis-score-label">/ 100</span>
             </div>
           </div>
 
           <div className="diagnosis-trend-row">
-            <span className={`badge ${aiDiagnosis.trend === 'declining' ? 'badge-critical' : 'badge-healthy'}`}>
-              {aiDiagnosis.trend === 'declining' ? (
+            <span className={`badge ${diagnosis.trend === 'declining' ? 'badge-critical' : 'badge-healthy'}`}>
+              {diagnosis.trend === 'declining' ? (
                 <TrendingDown size={10} />
               ) : (
                 <TrendingUp size={10} />
               )}
-              {aiDiagnosis.trend === 'declining' ? 'Declining' : 'Improving'}
+              {diagnosis.trend === 'declining' ? 'Declining' : 'Improving'}
             </span>
           </div>
 
-          <p className="diagnosis-text">{aiDiagnosis.summary}</p>
+          <p className="diagnosis-text">{diagnosis.summary}</p>
 
           <div className="diagnosis-items">
             <div className="diagnosis-item diagnosis-item--concern">
               <AlertTriangle size={13} />
               <div>
                 <div className="diagnosis-item-label">Top Concern</div>
-                <div className="diagnosis-item-value">{aiDiagnosis.topConcern}</div>
+                <div className="diagnosis-item-value">{diagnosis.topConcern}</div>
               </div>
             </div>
             <div className="diagnosis-item diagnosis-item--quickwin">
               <CheckCircle size={13} />
               <div>
                 <div className="diagnosis-item-label">Quick Win</div>
-                <div className="diagnosis-item-value">{aiDiagnosis.quickWin}</div>
+                <div className="diagnosis-item-value">{diagnosis.quickWin}</div>
               </div>
             </div>
           </div>
@@ -245,7 +284,7 @@ export default function Overview() {
             </a>
           </div>
           <div className="overview-alerts-list">
-            {topAlerts.map(alert => (
+            {alertsList.map(alert => (
               <div key={alert.id} className="overview-alert-row">
                 <div className={`status-dot status-dot-${alert.priority === 'critical' ? 'critical' : 'warning'}`} />
                 <div className="overview-alert-text">

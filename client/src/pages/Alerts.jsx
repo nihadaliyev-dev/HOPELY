@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Flame, Shield, TrendingDown, Users, Activity, UserPlus, ArrowRight, Loader2 } from 'lucide-react'
-import { alerts } from '../data/mockData'
 import { useToast } from '../context/ToastContext'
+import { useCommunity } from '../context/CommunityContext'
+import { dashboardService } from '../services/dashboardService'
 import './Alerts.css'
 
 const iconMap = {
@@ -16,12 +17,36 @@ const iconMap = {
 const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 }
 
 export default function Alerts() {
+  const { activeCommunity } = useCommunity()
+  const [alertsList, setAlertsList] = useState([])
+  const [loading, setLoading] = useState(true)
+  
   const [filter, setFilter] = useState('All')
   const [dismissed, setDismissed] = useState([])
   const [actingOn, setActingOn] = useState(null)
   const { addToast } = useToast()
 
-  const filtered = alerts
+  useEffect(() => {
+    if (!activeCommunity) return
+    let isMounted = true
+    setLoading(true)
+
+    dashboardService.getAlerts(activeCommunity.id)
+      .then(data => {
+        if (isMounted) setAlertsList(data)
+      })
+      .catch(err => {
+        console.error(err)
+        if (isMounted) addToast({ type: 'error', message: 'Failed to load alerts' })
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [activeCommunity, addToast])
+
+  const filtered = alertsList
     .filter(a => !dismissed.includes(a.id))
     .filter(a => filter === 'All' || a.priority === filter.toLowerCase())
     .sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9))
@@ -52,22 +77,28 @@ export default function Alerts() {
       </div>
 
       {/* Priority Filter */}
-      <div className="alerts-filter-row">
-        {['All', 'Critical', 'High', 'Medium'].map(p => {
-          const lower = p.toLowerCase()
-          const count = p === 'All' ? filtered.length : alerts.filter(a => a.priority === lower && !dismissed.includes(a.id)).length
-          return (
-            <button
-              key={p}
-              className={`alerts-filter-btn ${filter === p ? 'active' : ''} alerts-filter-btn--${lower}`}
-              onClick={() => setFilter(p)}
-            >
-              {p}
-              <span className="alerts-filter-count">{count}</span>
-            </button>
-          )
-        })}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="animate-spin text-brand" size={24} />
+        </div>
+      ) : (
+        <>
+          <div className="alerts-filter-row">
+            {['All', 'Critical', 'High', 'Medium'].map(p => {
+              const lower = p.toLowerCase()
+              const count = p === 'All' ? filtered.length : alertsList.filter(a => a.priority === lower && !dismissed.includes(a.id)).length
+              return (
+                <button
+                  key={p}
+                  className={`alerts-filter-btn ${filter === p ? 'active' : ''} alerts-filter-btn--${lower}`}
+                  onClick={() => setFilter(p)}
+                >
+                  {p}
+                  <span className="alerts-filter-count">{count}</span>
+                </button>
+              )
+            })}
+          </div>
 
       {/* Alert Cards */}
       <div className="alerts-list">
@@ -115,6 +146,8 @@ export default function Alerts() {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   )
 }

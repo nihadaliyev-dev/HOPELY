@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sparkles, Send, Calendar, Edit3, CheckCircle, Clock, Zap, TrendingUp, Loader2 } from 'lucide-react'
-import { sparks } from '../data/mockData'
 import { useToast } from '../context/ToastContext'
+import { useCommunity } from '../context/CommunityContext'
+import { dashboardService } from '../services/dashboardService'
 import './AISparks.css'
 
 const statusConfig = {
@@ -12,10 +13,33 @@ const statusConfig = {
 }
 
 export default function AISparks() {
-  const [sparkList, setSparkList] = useState(sparks)
+  const { activeCommunity } = useCommunity()
+  const [sparkList, setSparkList] = useState([])
+  const [loading, setLoading] = useState(true)
+
   const [activeFilter, setActiveFilter] = useState('All')
   const [generating, setGenerating] = useState(false)
   const { addToast } = useToast()
+
+  useEffect(() => {
+    if (!activeCommunity) return
+    let isMounted = true
+    setLoading(true)
+
+    dashboardService.getSparks(activeCommunity.id)
+      .then(data => {
+        if (isMounted) setSparkList(data)
+      })
+      .catch(err => {
+        console.error(err)
+        if (isMounted) addToast({ type: 'error', message: 'Failed to load AI Sparks' })
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [activeCommunity, addToast])
 
   const filters = ['All', 'draft', 'approved', 'scheduled']
   const filtered = activeFilter === 'All' ? sparkList : sparkList.filter(s => s.status === activeFilter)
@@ -85,14 +109,20 @@ export default function AISparks() {
         </div>
         <div className="spark-stat card">
           <span className="spark-stat-val" style={{ color: 'var(--brand-primary)' }}>
-            {Math.round(sparkList.reduce((sum, s) => sum + s.predictedEngagement, 0) / sparkList.length)}%
+            {sparkList.length ? Math.round(sparkList.reduce((sum, s) => sum + s.predictedEngagement, 0) / sparkList.length) : 0}%
           </span>
           <span className="spark-stat-label">Avg. Predicted Impact</span>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="sparks-filters">
+      {loading ? (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="animate-spin text-brand" size={24} />
+        </div>
+      ) : (
+      <>
+        {/* Filters */}
+        <div className="sparks-filters">
         {filters.map(f => (
           <button
             key={f}
@@ -104,12 +134,13 @@ export default function AISparks() {
         ))}
       </div>
 
-      {/* Spark Cards */}
-      <div className="sparks-grid">
-        {filtered.map(spark => (
-          <SparkCard key={spark.id} spark={spark} onUpdateStatus={updateStatus} />
-        ))}
-      </div>
+        <div className="sparks-grid">
+          {filtered.map(spark => (
+            <SparkCard key={spark.id} spark={spark} onUpdateStatus={updateStatus} />
+          ))}
+        </div>
+      </>
+      )}
     </div>
   )
 }
