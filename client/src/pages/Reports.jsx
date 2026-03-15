@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { FileText, Download, Calendar, Mail, FileOutput, CheckCircle2 } from 'lucide-react'
+import { FileText, Download, Calendar, Mail, FileOutput, CheckCircle2, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useToast } from '../context/ToastContext'
 import './Reports.css'
 
 const pastReports = [
@@ -13,12 +14,26 @@ const pastReports = [
 export default function Reports() {
   const [generating, setGenerating] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [reportsList, setReportsList] = useState(pastReports)
+  const { addToast } = useToast()
 
   const handleGenerate = () => {
     setGenerating(true)
     setTimeout(() => {
       setGenerating(false)
       setSuccess(true)
+      addToast({ type: 'success', message: 'Report generated successfully.' })
+      
+      // Mock appending to the history list
+      const newReport = { 
+        id: Date.now(), 
+        name: 'Comprehensive Health Digest', 
+        date: 'Just now', 
+        size: '1.2 MB', 
+        type: 'PDF' 
+      }
+      setReportsList(prev => [newReport, ...prev])
+
       setTimeout(() => setSuccess(false), 3000)
     }, 2500)
   }
@@ -91,7 +106,7 @@ export default function Reports() {
                   disabled={generating || success}
                 >
                   {generating ? (
-                    'Generating...'
+                    <><Loader2 size={14} className="animate-spin" /> Generating...</>
                   ) : success ? (
                     <><CheckCircle2 size={14} /> Ready to Download</>
                   ) : (
@@ -107,7 +122,7 @@ export default function Reports() {
           <div className="card past-reports">
             <h3 className="card-title">Past Reports</h3>
             <div className="past-reports-list">
-              {pastReports.map(report => (
+              {reportsList.map(report => (
                 <div key={report.id} className="past-report-item">
                   <div className="pr-icon">
                     <FileText size={16} />

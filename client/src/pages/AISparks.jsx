@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Sparkles, Send, Calendar, Edit3, CheckCircle, Clock, Zap, TrendingUp } from 'lucide-react'
+import { Sparkles, Send, Calendar, Edit3, CheckCircle, Clock, Zap, TrendingUp, Loader2 } from 'lucide-react'
 import { sparks } from '../data/mockData'
+import { useToast } from '../context/ToastContext'
 import './AISparks.css'
 
 const statusConfig = {
@@ -13,12 +14,38 @@ const statusConfig = {
 export default function AISparks() {
   const [sparkList, setSparkList] = useState(sparks)
   const [activeFilter, setActiveFilter] = useState('All')
+  const [generating, setGenerating] = useState(false)
+  const { addToast } = useToast()
 
   const filters = ['All', 'draft', 'approved', 'scheduled']
   const filtered = activeFilter === 'All' ? sparkList : sparkList.filter(s => s.status === activeFilter)
 
-  const updateStatus = (id, status) => {
+  const updateStatus = (id, status, title) => {
     setSparkList(list => list.map(s => s.id === id ? { ...s, status } : s))
+    if (status === 'approved') addToast({ type: 'success', message: 'Spark approved for publishing.' })
+    if (status === 'scheduled') addToast({ type: 'success', message: `Spark scheduled for delivery.` })
+    if (status === 'posted') addToast({ type: 'success', message: `Spark successfully posted to channel.` })
+  }
+
+  const handleGenerate = () => {
+    setGenerating(true)
+    setTimeout(() => {
+      setGenerating(false)
+      addToast({ type: 'success', message: 'Generated 3 new AI discussion sparks.' })
+      // Adding a mock newly generated spark
+      const newSpark = {
+        id: Date.now(),
+        title: 'New Member Welcome Prompt',
+        category: 'Icebreaker',
+        status: 'draft',
+        predictedEngagement: 85,
+        targetChannel: '#general',
+        tagMembers: ['@newbies'],
+        question: "Welcome everyone who joined this week! What's your top goal for the rest of this month?",
+        reason: 'Surge in new registrations over weekend',
+      }
+      setSparkList(prev => [newSpark, ...prev])
+    }, 2000)
   }
 
   return (
@@ -28,8 +55,13 @@ export default function AISparks() {
           <h1>AI Spark Generator</h1>
           <p>AI-crafted discussion starters to revive engagement across dead zones</p>
         </div>
-        <button className="btn btn-primary">
-          <Zap size={13} /> Generate New Spark
+        <button 
+          className="btn btn-primary"
+          onClick={handleGenerate}
+          disabled={generating}
+        >
+          {generating ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+          {generating ? 'Generating...' : 'Generate New Spark'}
         </button>
       </div>
 
@@ -155,17 +187,17 @@ function SparkCard({ spark, onUpdateStatus }) {
           <Edit3 size={12} /> Edit
         </button>
         {spark.status === 'draft' && (
-          <button className="btn btn-secondary btn-sm" onClick={() => onUpdateStatus(spark.id, 'approved')}>
+          <button className="btn btn-secondary btn-sm" onClick={() => onUpdateStatus(spark.id, 'approved', spark.title)}>
             <CheckCircle size={12} /> Approve
           </button>
         )}
         {spark.status !== 'scheduled' && spark.status !== 'posted' && (
-          <button className="btn btn-secondary btn-sm" onClick={() => onUpdateStatus(spark.id, 'scheduled')}>
+          <button className="btn btn-secondary btn-sm" onClick={() => onUpdateStatus(spark.id, 'scheduled', spark.title)}>
             <Calendar size={12} /> Schedule
           </button>
         )}
         {spark.status === 'approved' && (
-          <button className="btn btn-primary btn-sm" onClick={() => onUpdateStatus(spark.id, 'posted')}>
+          <button className="btn btn-primary btn-sm" onClick={() => onUpdateStatus(spark.id, 'posted', spark.title)}>
             <Send size={12} /> Post Now
           </button>
         )}

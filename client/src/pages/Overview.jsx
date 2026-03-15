@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { TrendingUp, TrendingDown, Minus, ArrowRight, Brain, AlertTriangle, CheckCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, ArrowRight, Brain, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
@@ -9,6 +9,7 @@ import {
 import MetricCard from '../components/ui/MetricCard'
 import ChannelDetailPanel from '../components/ui/ChannelDetailPanel'
 import { channels } from '../data/mockData'
+import { useToast } from '../context/ToastContext'
 import './Overview.css'
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -29,8 +30,38 @@ const topAlerts = allAlerts.filter(a => a.priority === 'critical').slice(0, 3)
 
 export default function Overview() {
   const [selectedChannel, setSelectedChannel] = useState(null)
+  
+  // Interactive mock states
+  const { addToast } = useToast()
+  const [isExporting, setIsExporting] = useState(false)
+  const [isDiagnosing, setIsDiagnosing] = useState(false)
+  const [loadingAlertId, setLoadingAlertId] = useState(null)
 
   const criticalChannels = channels.filter(c => c.risk === 'critical')
+
+  const handleExport = () => {
+    setIsExporting(true)
+    setTimeout(() => {
+      setIsExporting(false)
+      addToast({ type: 'success', message: 'Report generated and downloaded successfully.' })
+    }, 1500)
+  }
+
+  const handleDiagnosis = () => {
+    setIsDiagnosing(true)
+    setTimeout(() => {
+      setIsDiagnosing(false)
+      addToast({ type: 'success', message: 'AI Diagnosis complete. Found 2 new insights.' })
+    }, 2000)
+  }
+
+  const handleAlertAction = (alert) => {
+    setLoadingAlertId(alert.id)
+    setTimeout(() => {
+      setLoadingAlertId(null)
+      addToast({ type: 'success', message: `Action "${alert.action}" executed successfully.` })
+    }, 1000)
+  }
 
   return (
     <div className="overview animate-fade-in">
@@ -43,9 +74,21 @@ export default function Overview() {
           </p>
         </div>
         <div className="overview-header-actions">
-          <button className="btn btn-secondary btn-sm">Export Report</button>
-          <button className="btn btn-primary btn-sm">
-            <Brain size={13} /> Run AI Diagnosis
+          <button 
+            className="btn btn-secondary btn-sm"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? <Loader2 size={13} className="animate-spin" /> : null}
+            {isExporting ? 'Exporting...' : 'Export Report'}
+          </button>
+          <button 
+            className="btn btn-primary btn-sm"
+            onClick={handleDiagnosis}
+            disabled={isDiagnosing}
+          >
+            {isDiagnosing ? <Loader2 size={13} className="animate-spin" /> : <Brain size={13} />}
+            {isDiagnosing ? 'Running...' : 'Run AI Diagnosis'}
           </button>
         </div>
       </div>
@@ -210,7 +253,13 @@ export default function Overview() {
                   <span className="overview-alert-msg">{alert.message}</span>
                 </div>
                 <span className="overview-alert-time">{alert.time}</span>
-                <button className="btn btn-secondary btn-sm">{alert.action}</button>
+                <button 
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => handleAlertAction(alert)}
+                  disabled={loadingAlertId === alert.id}
+                >
+                  {loadingAlertId === alert.id ? <Loader2 size={13} className="animate-spin" /> : alert.action}
+                </button>
               </div>
             ))}
           </div>

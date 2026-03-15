@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Zap, AlertTriangle, MessageSquare, Play, Pause, MoreVertical, Search, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useToast } from '../context/ToastContext'
 import './Automations.css'
 
 const initialRules = [
@@ -39,13 +40,37 @@ const initialRules = [
 export default function Automations() {
   const [rules, setRules] = useState(initialRules)
   const [isCreating, setIsCreating] = useState(false)
+  const { addToast } = useToast()
 
   const toggleStatus = (id) => {
-    setRules(r => r.map(rule => 
-      rule.id === id 
-        ? { ...rule, status: rule.status === 'active' ? 'paused' : 'active' }
-        : rule
-    ))
+    setRules(r => r.map(rule => {
+      if (rule.id === id) {
+        const newStatus = rule.status === 'active' ? 'paused' : 'active'
+        addToast({ 
+          type: newStatus === 'active' ? 'success' : 'info', 
+          message: `Automation "${rule.name}" is now ${newStatus}.` 
+        })
+        return { ...rule, status: newStatus }
+      }
+      return rule
+    }))
+  }
+
+  const handleSaveRule = () => {
+    setIsCreating(false)
+    addToast({ type: 'success', message: 'New automation rule activated!' })
+    // Mock adding rule to top of list
+    const newRule = {
+      id: Date.now(),
+      name: 'Custom Alert Rule',
+      ifMetric: 'Channel Inactivity',
+      condition: '> 24 hours',
+      action: 'Send Slack DM',
+      status: 'active',
+      lastRun: 'Never',
+      runs: 0
+    }
+    setRules(prev => [newRule, ...prev])
   }
 
   return (
@@ -105,7 +130,7 @@ export default function Automations() {
           </div>
           <div className="builder-actions">
             <button className="btn btn-secondary" onClick={() => setIsCreating(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={() => setIsCreating(false)}><Check size={14} /> Save & Activate</button>
+            <button className="btn btn-primary" onClick={handleSaveRule}><Check size={14} /> Save & Activate</button>
           </div>
         </motion.div>
       )}

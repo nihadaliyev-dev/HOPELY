@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { Search, Bell, ChevronDown, Clock, RefreshCw, LogOut, Settings as SettingsIcon, User } from 'lucide-react'
 import { useCommunity } from '../../context/CommunityContext'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import './TopBar.css'
 
 const routeLabels = {
@@ -20,10 +21,12 @@ export default function TopBar() {
   const location = useLocation()
   const { communities, activeCommunity, setActiveCommunity } = useCommunity()
   const { user, logout } = useAuth()
+  const { addToast } = useToast()
   
   const [timeRange, setTimeRange] = useState('7d')
   const [communityDropdownOpen, setCommunityDropdownOpen] = useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   const communityRef = useRef(null)
   const profileRef = useRef(null)
@@ -119,8 +122,19 @@ export default function TopBar() {
         </div>
 
         {/* Refresh */}
-        <button className="topbar-icon-btn" title="Refresh data">
-          <RefreshCw size={15} />
+        <button 
+          className="topbar-icon-btn" 
+          title="Refresh data"
+          onClick={() => {
+            if (isRefreshing) return;
+            setIsRefreshing(true)
+            setTimeout(() => {
+              setIsRefreshing(false)
+              addToast({ type: 'success', message: 'Dashboard data synced with community servers.' })
+            }, 1000)
+          }}
+        >
+          <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
         </button>
 
         {/* Alerts bell */}
